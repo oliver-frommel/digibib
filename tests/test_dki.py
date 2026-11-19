@@ -3,6 +3,22 @@ import unittest
 from digibib.dki import decode
 
 
+class ParagraphReflowTest(unittest.TestCase):
+    def test_legacy_wraps_keep_headings_and_indented_paragraphs(self):
+        body = (
+            b"\x01\x04Teil\x02\x02"
+            b"\x00\x04\x01\x013\x1b\x02\x00\x04"
+            b"\x01\x04Tle.\x02\x00\x04\x01\x04Ende\x03"
+        )
+        page = decode(body, modern=False)
+        self.assertEqual(page.text, "Teil\n\n3\nTle.\nEnde")
+        self.assertEqual(page.prose, "Teil\n\n3 Tle.\n\nEnde")
+
+    def test_modern_breaks_preserve_existing_semantics(self):
+        body = b"\x01\x04Teil\x02\x01\x013\x8b\x01\x04Tle.\x03"
+        self.assertEqual(decode(body, modern=True).prose, "Teil\n\n3 Tle.")
+
+
 class BibliographyMarkerTest(unittest.TestCase):
     def test_only_symbol_font_ampersands_become_books(self):
         body = b"\x0d\x01\x01\x81&\x0d\x00\x01\x87Brandis\x01\x81&\x01\x06Zeller\x03"

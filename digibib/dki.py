@@ -203,6 +203,7 @@ def decode(body: bytes, modern: bool, author_signatures=()) -> Page:
     source = edition = ""
     character_set = 0
     space = joining = False
+    legacy_paragraph_candidate = False
     for opcode, payload in marked_tokens(body, author_signatures):
         if opcode == AUTHOR_SIGNATURE:
             parts.extend(("\n\n— ", payload.decode("cp1252"), "\n\n"))
@@ -223,10 +224,16 @@ def decode(body: bytes, modern: bool, author_signatures=()) -> Page:
             space = modern and bool(payload[0] & 0x80)
             joining = False
         elif opcode in (0x00, 0x1B):
+            if opcode == 0x00 and payload[0] and legacy_paragraph_candidate and parts[-1:] == ["\r"]:
+                parts[-1] = "\n"
             space = bool(parts and not parts[-1].endswith(("\n", "\r")) and not joining)
         elif opcode in (0x02, 0x8B):
             if not joining:
-                parts.append("\n" if opcode == 0x02 else "\r")
+                # Legacy records use 02 for both physical lines and paragraphs.
+                # A break without a trailing space followed by an indent starts
+                # a paragraph. Consecutive breaks also preserve paragraph spacing.
+                legacy_paragraph_candidate = not modern and opcode == 0x02 and not space
+                parts.append("\n" if modern and opcode == 0x02 else "\r")
             space = False
         elif opcode in (0x15, 0xAC):
             if parts and parts[-1].endswith("-"):
@@ -255,5 +262,6 @@ def decode(body: bytes, modern: bool, author_signatures=()) -> Page:
     prose = re.sub(r"(?<!\n)\n(?!\n)", "\n\n", prose)
     return Page(
         text, source, edition, tuple(print_pages), tuple(dict.fromkeys(illustrations)), prose,
-        layout.startswith("\n"), layout.endswith("\n"),
+        layout.startswith(("\n", "\r\r", "\r\n")),
+        layout.endswith(("\n", "\r\r", "\n\r")),
     )
