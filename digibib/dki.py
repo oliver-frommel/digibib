@@ -201,6 +201,7 @@ def decode(body: bytes, modern: bool, author_signatures=()) -> Page:
     print_pages = []
     illustrations = []
     source = edition = ""
+    character_set = 0
     space = joining = False
     for opcode, payload in marked_tokens(body, author_signatures):
         if opcode == AUTHOR_SIGNATURE:
@@ -214,7 +215,11 @@ def decode(body: bytes, modern: bool, author_signatures=()) -> Page:
                 word = INLINE_PRONUNCIATION.sub(
                     lambda match: bytes((PRONUNCIATION_VOWELS[match[1][0]],)), word,
                 )
-            parts.append(word.decode("cp1252", errors="replace"))
+            # The bibliography marker is a book glyph in character set 1.
+            if character_set == 1 and word == b"&":
+                parts.append("\U0001f56e")
+            else:
+                parts.append(word.decode("cp1252", errors="replace"))
             space = modern and bool(payload[0] & 0x80)
             joining = False
         elif opcode in (0x00, 0x1B):
@@ -230,6 +235,8 @@ def decode(body: bytes, modern: bool, author_signatures=()) -> Page:
             space = False
         elif opcode == 0x0F:
             print_pages.append(int.from_bytes(payload, "little"))
+        elif opcode == 0x0D:
+            character_set = payload[0]
         elif opcode == 0x0E and not source:
             source = payload[1:].decode("cp1252", errors="replace")
         elif opcode in (0x0B, 0x80):
