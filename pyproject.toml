@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "digibib"
+version = "0.1.0"
+description = "Offline desktop reader for Directmedia Digitale Bibliothek discs"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Environment :: X11 Applications",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
+
+[project.optional-dependencies]
+images = ["Pillow"]
+
+[project.scripts]
+digibib = "digibib.__main__:main"
+
+[tool.setuptools]
+packages = ["digibib"]
