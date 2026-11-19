@@ -59,6 +59,10 @@ python -m pip install build
 python -m build
 ```
 
+## License
+
+The reader is licensed under the [GNU General Public License, version 3](LICENSE).
+
 ## AI Policy
 
 This repo is fully vibe coded
