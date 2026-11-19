@@ -58,3 +58,8 @@ To build a wheel and source distribution:
 python -m pip install build
 python -m build
 ```
+
+## AI Policy
+
+This repo is fully vibe coded
+
